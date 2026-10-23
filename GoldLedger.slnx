@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="GoldLedger.API/GoldLedger.API.csproj" Id="42d15abe-3bfd-4e5a-86fd-520a0c0a23a5" />
+  <Project Path="GoldLedger.Application/GoldLedger.Application.csproj" />
+  <Project Path="GoldLedger.Domain/GoldLedger.Domain.csproj" />
+  <Project Path="GoldLedger.Infrastructure/GoldLedger.Infrastructure.csproj" />
+  <Project Path="GoldLedger.Tests/GoldLedger.Tests.csproj" />
+</Solution>
