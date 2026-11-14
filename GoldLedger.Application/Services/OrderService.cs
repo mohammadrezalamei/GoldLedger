@@ -37,7 +37,6 @@ public class OrderService : IOrderService
             order.Type,
             order.Weight.Value,
             order.UnitPrice.Amount,
-            order.UnitPrice.Currency,
             order.FeePercent.Value,
             order.TotalAmount.Amount,
             order.Status,
@@ -55,7 +54,7 @@ public class OrderService : IOrderService
         if (!weightResult.IsSuccess)
             return Result<Guid>.Failure(weightResult.Message!, weightResult.ErrorType);
 
-        var priceResult = Money.Create(request.UnitPriceAmount, request.Currency);
+        var priceResult = Money.Create(request.UnitPriceAmount);
         if (!priceResult.IsSuccess)
             return Result<Guid>.Failure(priceResult.Message!, priceResult.ErrorType);
 
@@ -172,7 +171,6 @@ public class OrderService : IOrderService
             order.Type,
             order.Weight.Value,
             order.UnitPrice.Amount,
-            order.UnitPrice.Currency,
             order.FeePercent.Value,
             order.TotalAmount.Amount,
             order.Status,
@@ -184,3 +182,4 @@ public class OrderService : IOrderService
         return Result<IEnumerable<GoldOrderResponseDto>>.Success(response);
     }
 }
+

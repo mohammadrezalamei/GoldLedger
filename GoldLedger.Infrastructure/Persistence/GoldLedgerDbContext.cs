@@ -32,8 +32,8 @@ public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> op
             builder.ToTable("Orders");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Weight).HasConversion(x => x.Value, x => GoldWeight.Create(x).Value!).HasPrecision(18, 6);
-            builder.Property(x => x.UnitPrice).HasConversion(x => x.Amount, x => Money.Create(x, "IRR").Value!).HasPrecision(18, 2);
-            builder.Property(x => x.TotalAmount).HasConversion(x => x.Amount, x => Money.Create(x, "IRR").Value!).HasPrecision(18, 2);
+            builder.Property(x => x.UnitPrice).HasConversion(x => x.Amount, x => Money.Create(x).Value!).HasPrecision(18, 2);
+            builder.Property(x => x.TotalAmount).HasConversion(x => x.Amount, x => Money.Create(x).Value!).HasPrecision(18, 2);
             builder.Property(x => x.FeePercent).HasConversion(x => x.Value, x => Percentage.Create(x).Value!).HasPrecision(9, 4);
             builder.Property(x => x.UserNote).HasMaxLength(1000);
             builder.Property(x => x.ConcurrencyToken).IsConcurrencyToken();

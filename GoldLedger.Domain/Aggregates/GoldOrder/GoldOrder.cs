@@ -94,7 +94,7 @@ public class GoldOrder : AggregateRoot<Guid>
 
         var total = Type == OrderType.Buy ? baseAmount + feeAmount : baseAmount - feeAmount;
 
-        TotalAmount = Money.Create(total, UnitPrice.Currency).Value!;
+        TotalAmount = Money.Create(total).Value!;
     }
 
     public Result UpdateMetadata(IEnumerable<Tag> newTags, string? newUserNote)
