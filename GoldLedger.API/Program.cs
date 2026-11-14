@@ -5,8 +5,6 @@ using GoldLedger.Domain.Repositories;
 using GoldLedger.Infrastructure.Persistence;
 using GoldLedger.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-using GoldLedger.Application.Contracts.Common;
-using GoldLedger.Application.Contracts.Services;
 using GoldLedger.Infrastructure.Time;
 using GoldLedger.Infrastructure.Payments;
 
