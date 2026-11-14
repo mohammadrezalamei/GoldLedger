@@ -141,7 +141,7 @@ public class GoldWeightTests
         var result2 = money * weight;
 
         Assert.Equal(200000m, result1.Amount);
-        Assert.Equal("IRR", result1.Currency);
+        Assert.Equal("IRR", result1);
         Assert.Equal(200000m, result2.Amount);
     }
 

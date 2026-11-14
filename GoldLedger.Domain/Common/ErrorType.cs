@@ -9,3 +9,4 @@ namespace GoldLedger.Domain.Common
         ServerError = 4
     }
 }
+

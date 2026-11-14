@@ -5,8 +5,8 @@ public record CreateOrderRequestDto(
     OrderType Type,
     decimal WeightValue,
     decimal UnitPriceAmount,
-    string Currency,
     decimal FeePercent,
     IEnumerable<string>? Tags,
     string? UserNote
 );
+

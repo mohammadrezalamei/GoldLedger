@@ -102,3 +102,4 @@ public class GoldWallet : AggregateRoot<Guid>
         return Result.Success();
     }
 }
+

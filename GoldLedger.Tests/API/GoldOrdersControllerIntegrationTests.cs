@@ -33,7 +33,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Buy,
                 WeightValue: 2.5m,
                 UnitPriceAmount: 4500000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: new[] { "خرید-آنلاین" },
                 UserNote: "تست ثبت سفارش خرید طلا"
@@ -94,7 +93,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Sell,
                 WeightValue: 3.0m,
                 UnitPriceAmount: 4500000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: new[] { "فروش-طلا" },
                 UserNote: "تست فروش طلا با موجودی کافی"
@@ -119,7 +117,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Buy,
                 WeightValue: 1.0m,
                 UnitPriceAmount: 4000000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: null,
                 UserNote: "سفارش برای لغو"
@@ -152,7 +149,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Buy,
                 WeightValue: 2.0m,
                 UnitPriceAmount: 4000000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: null,
                 UserNote: "سفارش برای تکمیل"
@@ -182,7 +178,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Buy,
                 WeightValue: -1.5m, // وزن منفی (نامعتبر)
                 UnitPriceAmount: 4000000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: null,
                 UserNote: "تست وزن منفی"
@@ -205,7 +200,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Sell,
                 WeightValue: 10.0m, // درخواست فروش مقدار زیاد بدون موجودی
                 UnitPriceAmount: 4000000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: null,
                 UserNote: "فروش بدون موجودی در والت"
@@ -230,7 +224,6 @@ namespace GoldLedger.Tests.API
                 Type: OrderType.Buy,
                 WeightValue: 2.0m,
                 UnitPriceAmount: 4000000m,
-                Currency: "IRR",
                 FeePercent: 1.0m,
                 Tags: new[] { "تست-لیست" },
                 UserNote: "ثبت سفارش برای تست لیست"
@@ -246,3 +239,4 @@ namespace GoldLedger.Tests.API
         }
     }
 }
+

@@ -21,3 +21,4 @@ public sealed class Money : ValueObject<Money>
     public Money CalculatePercentage(Percentage percentage) { ArgumentNullException.ThrowIfNull(percentage); return new Money((Amount * percentage.Value) / 100m); }
     public override string ToString() => Amount.ToString("N2");
 }
+

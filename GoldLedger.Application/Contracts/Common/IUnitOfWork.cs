@@ -7,3 +7,4 @@ namespace GoldLedger.Application.Contracts.Common
         public Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
+

@@ -24,7 +24,7 @@ public class GoldOrderTests
         Assert.Equal(OrderType.Buy, order.Type);
         Assert.Equal(OrderStatus.Pending, order.Status);
         Assert.Equal(530_250_000m, order.TotalAmount.Amount);
-        Assert.Equal("IRR", order.TotalAmount.Currency);
+        Assert.Equal("IRR", order.TotalAmount);
         Assert.Single(order.Tags);
     }
 

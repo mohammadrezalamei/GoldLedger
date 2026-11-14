@@ -73,3 +73,4 @@ namespace GoldLedger.Tests.Infrastructure
         }
     }
 }
+

@@ -130,3 +130,4 @@ public class GoldOrder : AggregateRoot<Guid>
         return Result.Success();
     }
 }
+

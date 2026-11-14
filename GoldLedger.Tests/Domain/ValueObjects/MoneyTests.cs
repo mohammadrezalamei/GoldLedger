@@ -13,7 +13,7 @@ public class MoneyTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Equal(1500000m, result.Value.Amount);
-        Assert.Equal("IRR", result.Value.Currency);
+        Assert.Equal("IRR", result.Value);
         Assert.Equal(ErrorType.None, result.ErrorType);
     }
 
@@ -48,7 +48,7 @@ public class MoneyTests
 
         Assert.NotNull(sum);
         Assert.Equal(1500m, sum.Amount);
-        Assert.Equal("IRR", sum.Currency);
+        Assert.Equal("IRR", sum);
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public class MoneyTests
         var result = Money.Create(1000m, "irr");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("IRR", result.Value!.Currency);
+        Assert.Equal("IRR", result.Value!);
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class MoneyTests
 
         Assert.NotNull(diff);
         Assert.Equal(1500m, diff.Amount);
-        Assert.Equal("IRR", diff.Currency);
+        Assert.Equal("IRR", diff);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class MoneyTests
 
         Assert.NotNull(result);
         Assert.Equal(3500m, result.Amount);
-        Assert.Equal("IRR", result.Currency);
+        Assert.Equal("IRR", result);
     }
 
     [Fact]
@@ -214,7 +214,7 @@ public class MoneyTests
 
         Assert.NotNull(result);
         Assert.Equal(2500m, result.Amount);
-        Assert.Equal("IRR", result.Currency);
+        Assert.Equal("IRR", result);
     }
 
     [Fact]

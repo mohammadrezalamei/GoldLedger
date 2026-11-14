@@ -36,7 +36,6 @@ public class OrderServiceTests
             OrderType.Sell,
             WeightValue: 10m,
             UnitPriceAmount: 5000m,
-            Currency: "IRR",
             FeePercent: 1m,
             Tags: new[] { "Gold" },
             UserNote: "Test Sell"
@@ -69,7 +68,6 @@ public class OrderServiceTests
             OrderType.Sell,
             WeightValue: 30m,
             UnitPriceAmount: 5000m,
-            Currency: "IRR",
             FeePercent: 1m,
             Tags: null,
             UserNote: null
@@ -211,7 +209,6 @@ public class OrderServiceTests
             OrderType.Buy,
             WeightValue: 5m,
             UnitPriceAmount: 1000m,
-            Currency: "IRR",
             FeePercent: 1m,
             Tags: null,
             UserNote: "Buy test"
@@ -241,7 +238,6 @@ public class OrderServiceTests
             OrderType.Sell,
             WeightValue: 5m,
             UnitPriceAmount: 1000m,
-            Currency: "IRR",
             FeePercent: 1m,
             Tags: null,
             UserNote: null

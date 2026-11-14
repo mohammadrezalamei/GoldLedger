@@ -120,7 +120,7 @@ public class PercentageTests
 
         Assert.NotNull(result);
         Assert.Equal(500m, result.Amount);
-        Assert.Equal("IRR", result.Currency);
+        Assert.Equal("IRR", result);
     }
 
     [Fact]

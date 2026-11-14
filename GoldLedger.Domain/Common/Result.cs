@@ -35,3 +35,4 @@ namespace GoldLedger.Domain.Common
             => new(default, false, errorMessage, errorType);
     }
 }
+

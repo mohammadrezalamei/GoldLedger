@@ -8,7 +8,6 @@ public record GoldOrderResponseDto(
     OrderType Type,
     decimal WeightValue,
     decimal UnitPriceAmount,
-    string Currency,
     decimal FeePercent,
     decimal TotalAmount,
     OrderStatus Status,
@@ -16,3 +15,4 @@ public record GoldOrderResponseDto(
     IEnumerable<string> Tags,
     DateTime CreatedAt
 );
+
