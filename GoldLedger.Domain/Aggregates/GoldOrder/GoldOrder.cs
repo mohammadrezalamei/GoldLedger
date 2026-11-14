@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 using GoldLedger.Domain.ValueObjects;
 
 namespace GoldLedger.Domain.Aggregates.GoldOrder;
@@ -59,19 +59,22 @@ public class GoldOrder : AggregateRoot<Guid>
         string? userNote = null)
     {
         if (userId == Guid.Empty)
-            return Result<GoldOrder>.Failure("شناسه کاربر نامعتبر است.", ErrorType.Validation);
+            return Result<GoldOrder>.Failure("Ø´Ù†Ø§Ø³Ù‡ Ú©Ø§Ø±Ø¨Ø± Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª.", ErrorType.Validation);
 
         if (weight is null)
-            return Result<GoldOrder>.Failure("وزن طلا نمی‌تواند خالی باشد.", ErrorType.Validation);
+            return Result<GoldOrder>.Failure("ÙˆØ²Ù† Ø·Ù„Ø§ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø®Ø§Ù„ÛŒ Ø¨Ø§Ø´Ø¯.", ErrorType.Validation);
 
         if (unitPrice is null)
-            return Result<GoldOrder>.Failure("مظنه قیمت نمی‌تواند خالی باشد.", ErrorType.Validation);
+            return Result<GoldOrder>.Failure("Ù…Ø¸Ù†Ù‡ Ù‚ÛŒÙ…Øª Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø®Ø§Ù„ÛŒ Ø¨Ø§Ø´Ø¯.", ErrorType.Validation);
 
         if (feePercent is null)
-            return Result<GoldOrder>.Failure("درصد کارمزد نمی‌تواند خالی باشد.", ErrorType.Validation);
+            return Result<GoldOrder>.Failure("Ø¯Ø±ØµØ¯ Ú©Ø§Ø±Ù…Ø²Ø¯ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø®Ø§Ù„ÛŒ Ø¨Ø§Ø´Ø¯.", ErrorType.Validation);
+
+        if (userNote?.Length > 1000)
+            return Result<GoldOrder>.Failure("یادداشت سفارش نمی‌تواند بیشتر از ۱۰۰۰ کاراکتر باشد.", ErrorType.Validation);
 
         if(type is OrderType.None)
-            return Result<GoldOrder>.Failure("نوع سفارش نامعتبر است", ErrorType.Validation);
+            return Result<GoldOrder>.Failure("Ù†ÙˆØ¹ Ø³ÙØ§Ø±Ø´ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª", ErrorType.Validation);
 
         var order = new GoldOrder(userId, type, weight, unitPrice, feePercent, tags ?? Enumerable.Empty<Tag>(), userNote);
 
@@ -100,7 +103,7 @@ public class GoldOrder : AggregateRoot<Guid>
     public Result UpdateMetadata(IEnumerable<Tag> newTags, string? newUserNote)
     {
         if (Status == OrderStatus.Cancelled)
-            return Result.Failure("امکان ویرایش سفارش لغو شده وجود ندارد.", ErrorType.Validation);
+            return Result.Failure("Ø§Ù…Ú©Ø§Ù† ÙˆÛŒØ±Ø§ÛŒØ´ Ø³ÙØ§Ø±Ø´ Ù„ØºÙˆ Ø´Ø¯Ù‡ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯.", ErrorType.Validation);
 
         _tags.Clear();
         foreach (var tag in newTags)
@@ -115,7 +118,7 @@ public class GoldOrder : AggregateRoot<Guid>
     public Result Complete()
     {
         if (Status != OrderStatus.Pending)
-            return Result.Failure("فقط سفارش‌های معلق قابل تکمیل هستند.", ErrorType.Validation);
+            return Result.Failure("ÙÙ‚Ø· Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§ÛŒ Ù…Ø¹Ù„Ù‚ Ù‚Ø§Ø¨Ù„ ØªÚ©Ù…ÛŒÙ„ Ù‡Ø³ØªÙ†Ø¯.", ErrorType.Validation);
 
         Status = OrderStatus.Settled;
         return Result.Success();
@@ -124,10 +127,12 @@ public class GoldOrder : AggregateRoot<Guid>
     public Result Cancel()
     {
         if (Status != OrderStatus.Pending)
-            return Result.Failure("فقط سفارش‌های معلق قابل لغو کردن هستند.", ErrorType.Validation);
+            return Result.Failure("ÙÙ‚Ø· Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§ÛŒ Ù…Ø¹Ù„Ù‚ Ù‚Ø§Ø¨Ù„ Ù„ØºÙˆ Ú©Ø±Ø¯Ù† Ù‡Ø³ØªÙ†Ø¯.", ErrorType.Validation);
 
         Status = OrderStatus.Cancelled;
         return Result.Success();
     }
 }
+
+
 
