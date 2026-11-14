@@ -4,6 +4,7 @@ using GoldLedger.Application.Services;
 using GoldLedger.Domain.Repositories;
 using GoldLedger.Infrastructure.Persistence;
 using GoldLedger.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace GoldLedger.API
 {
@@ -18,9 +19,11 @@ namespace GoldLedger.API
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddSingleton<IGoldWalletRepository, InMemoryGoldWalletRepository>();
-            builder.Services.AddSingleton<IGoldOrderRepository, InMemoryGoldOrderRepository>();
-            builder.Services.AddSingleton<IUnitOfWork, InMemoryUnitOfWork>();
+            builder.Services.AddDbContext<GoldLedgerDbContext>(options =>
+                options.UseSqlite(builder.Configuration.GetConnectionString("GoldLedger")));
+            builder.Services.AddScoped<IGoldWalletRepository, GoldWalletRepository>();
+            builder.Services.AddScoped<IGoldOrderRepository, GoldOrderRepository>();
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<IOrderService, OrderService>();

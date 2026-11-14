@@ -10,6 +10,7 @@ public class GoldWallet : AggregateRoot<Guid>
     public GoldWeight LockedBalance { get; private set; } = null!;
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
+    public int ConcurrencyToken { get; private set; }
 
     public GoldWeight AvailableBalance => Balance - LockedBalance;
 

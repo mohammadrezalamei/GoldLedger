@@ -18,6 +18,7 @@ public class GoldOrder : AggregateRoot<Guid>
     public IReadOnlyCollection<Tag> Tags => _tags;
 
     public DateTime CreatedAt { get; private set; }
+    public int ConcurrencyToken { get; private set; }
 
     private GoldOrder() { }
 
