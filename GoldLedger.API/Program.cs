@@ -5,6 +5,10 @@ using GoldLedger.Domain.Repositories;
 using GoldLedger.Infrastructure.Persistence;
 using GoldLedger.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
+using GoldLedger.Application.Contracts.Common;
+using GoldLedger.Application.Contracts.Services;
+using GoldLedger.Infrastructure.Time;
+using GoldLedger.Infrastructure.Payments;
 
 namespace GoldLedger.API
 {
@@ -24,6 +28,8 @@ namespace GoldLedger.API
             builder.Services.AddScoped<IGoldWalletRepository, GoldWalletRepository>();
             builder.Services.AddScoped<IGoldOrderRepository, GoldOrderRepository>();
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddSingleton<IClock, TehranClock>();
+            builder.Services.AddScoped<IPaymentSettlementService, PaymentSettlementService>();
 
             builder.Services.AddScoped<IWalletService, WalletService>();
             builder.Services.AddScoped<IOrderService, OrderService>();
@@ -41,3 +47,4 @@ namespace GoldLedger.API
         }
     }
 }
+

@@ -12,3 +12,4 @@ public sealed class GoldWalletRepository(GoldLedgerDbContext context) : IGoldWal
     public Task AddAsync(GoldWallet wallet, CancellationToken cancellationToken = default) => context.Wallets.AddAsync(wallet, cancellationToken).AsTask();
     public void Update(GoldWallet wallet) => context.Wallets.Update(wallet);
 }
+

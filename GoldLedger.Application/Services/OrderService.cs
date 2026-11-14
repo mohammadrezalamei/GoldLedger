@@ -62,7 +62,14 @@ public class OrderService : IOrderService
         if (!feeResult.IsSuccess)
             return Result<Guid>.Failure(feeResult.Message!, feeResult.ErrorType);
 
-        var tags = request.Tags?.Select(t => Tag.Create(t).Value!) ?? Enumerable.Empty<Tag>();
+        var tags = new List<Tag>();
+        foreach (var rawTag in request.Tags ?? Enumerable.Empty<string>())
+        {
+            var tagResult = Tag.Create(rawTag);
+            if (!tagResult.IsSuccess)
+                return Result<Guid>.Failure(tagResult.Message!, tagResult.ErrorType);
+            tags.Add(tagResult.Value!);
+        }
 
         var orderResult = GoldOrder.Create(
             request.UserId,

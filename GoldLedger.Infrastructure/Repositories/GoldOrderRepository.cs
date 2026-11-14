@@ -12,3 +12,4 @@ public sealed class GoldOrderRepository(GoldLedgerDbContext context) : IGoldOrde
     public Task AddAsync(GoldOrder order, CancellationToken cancellationToken = default) => context.Orders.AddAsync(order, cancellationToken).AsTask();
     public void Update(GoldOrder order) => context.Orders.Update(order);
 }
+

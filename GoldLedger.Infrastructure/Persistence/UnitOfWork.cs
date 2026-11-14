@@ -22,3 +22,4 @@ public sealed class UnitOfWork(GoldLedgerDbContext context) : IUnitOfWork
         }
     }
 }
+
