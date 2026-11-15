@@ -16,3 +16,4 @@
     <ProjectReference Include="..\GoldLedger.Infrastructure\GoldLedger.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
+
