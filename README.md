@@ -1,38 +1,50 @@
 ﻿# GoldLedger
 
-GoldLedger is a portfolio sample of a gold trading ledger built with ASP.NET Core and C#. It demonstrates how a small transactional domain can be organized with Clean Architecture and Domain-Driven Design (DDD), while keeping business outcomes explicit through the Result Pattern and protecting shared in-memory state with thread-safe repository operations.
+GoldLedger is a gold wallet and order sample using .NET 10, ASP.NET Core, EF Core and SQLite.
 
 ## Architecture
 
-The solution is separated into focused projects:
+- GoldLedger.Domain contains aggregates, value objects, validation, domain events and repository contracts.
+- GoldLedger.Application coordinates wallet and order operations. DTOs carry data; validation belongs to the domain.
+- GoldLedger.Infrastructure implements SQLite persistence, internal settlement, event dispatch and the Tehran clock.
+- GoldLedger.API exposes HTTP endpoints and Swagger.
+- GoldLedger.Tests covers domain behavior, persistence, services and HTTP endpoints.
 
-- **GoldLedger.Domain** — domain entities, aggregates, value objects, domain events, repository contracts, and the reusable `Result` / `Result<T>` types.
-- **GoldLedger.Application** — wallet and order use cases, application services, DTOs, and service contracts.
-- **GoldLedger.Infrastructure** — SQLite persistence, repositories, and unit-of-work implementation.
-- **GoldLedger.API** — ASP.NET Core controllers and composition root, with Swagger for exploring the API.
-- **GoldLedger.Tests** — API integration tests and infrastructure repository tests.
+## Transactions and concurrency
 
-## Concepts demonstrated
+All application mutations run through a shared operation guard. Failed results, exceptions and cancellation discard tracked changes. UnitOfWork also discards changes when preparing or saving a transaction fails.
 
-- **Clean Architecture:** dependencies are arranged so application and infrastructure concerns are separated from the domain model.
-- **Domain-Driven Design:** gold orders and wallets are modeled around domain concepts, with value objects, aggregate roots, and domain events.
-- **Result Pattern:** operations express success or failure as values, including error information, rather than relying on exceptions for expected business outcomes.
-- **Thread-safe in-memory concurrency:** singleton in-memory repositories coordinate access to shared state for concurrent requests. This keeps the sample self-contained; the in-memory store is not intended as durable production persistence.
+Wallets and orders use application-managed concurrency tokens. Updating owned order tags also updates the order token. Stale updates and duplicate keys return Conflict; callers must reload state before retrying. SQLite lock contention also returns Conflict when it occurs during UnitOfWork execution.
+
+Domain events are dispatched before the final save. Creation events are recorded in DomainEventRecords. A completion event stages an internal PaymentSettlement. The order, wallet, settlement and event records are persisted by the same SaveChanges transaction. Events are cleared only after a successful save or when failed changes are discarded.
+
+PaymentSettlements has one entry per order. Matching settlement requests are idempotent; inconsistent repeats fail. Buy entries record the debit including fees; sell entries record the credit after fees. This is an internal ledger, not a bank/payment gateway integration. Event records are an audit log, not an external-message outbox. External integrations would need a separate reliable delivery mechanism.
+
+Use UnitOfWork for application writes so that event handling and settlement run. Direct DbContext.SaveChanges is reserved for infrastructure work.
+
+## Time
+
+Production services use an injected clock backed by TimeProvider. Dates are stored in UTC; order response timestamps include the Asia/Tehran offset. Domain methods accept an explicit occurrence time for deterministic callers.
 
 ## Run locally
 
-Requires the .NET SDK compatible with the target framework declared in the project files.
+Run these commands from the solution directory in PowerShell. The absolute database path ensures the API and migration tool use the same file.
 
-```bash
+```powershell
 dotnet restore GoldLedger.slnx
-dotnet build GoldLedger.slnx
-dotnet test GoldLedger.slnx
-dotnet run --project GoldLedger.API/GoldLedger.API.csproj
+$env:ConnectionStrings__GoldLedger = "Data Source=$PWD/GoldLedger.API/goldledger.db"
+dotnet ef database update --project GoldLedger.Infrastructure --startup-project GoldLedger.API
+dotnet run --project GoldLedger.API
 ```
 
-The API exposes Swagger UI at the application root when running locally.
+Swagger UI is available at the application root. Database migrations are explicit; the API does not create or migrate tables at startup.
 
-## Scope
+The EnforceLedgerIntegrityAndSettlement migration adds settlement/event tables and database constraints. Existing invalid records must be corrected before this migration can succeed. Existing settled orders are not backfilled with invented payment records.
 
-This repository is intended as an architecture and implementation portfolio sample for gold wallet and buy/sell order flows. It preserves the existing project behavior and does not add unrelated features. The SQLite persistence is volatile and suitable for demonstration/testing rather than production use.
+## Verification
 
+```powershell
+dotnet test GoldLedger.slnx
+```
+
+Source files use UTF-8 and CRLF line endings.
