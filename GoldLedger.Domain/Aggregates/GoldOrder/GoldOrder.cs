@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 using GoldLedger.Domain.ValueObjects;
 
 namespace GoldLedger.Domain.Aggregates.GoldOrder;
@@ -23,7 +23,7 @@ public sealed class GoldOrder : AggregateRoot<Guid>
 
     private readonly HashSet<Tag> _tags = new();
 
-    public IReadOnlyCollection<Tag> Tags => _tags;
+    public IReadOnlyCollection<Tag> Tags => _tags.ToArray();
 
     public DateTime CreatedAt { get; private set; }
 
@@ -40,7 +40,9 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         Money unitPrice,
         Percentage feePercent,
         IEnumerable<Tag> tags,
-        string? userNote)
+        string? userNote,
+        Money totalAmount,
+        DateTime occurredAt)
     {
         Id = Guid.NewGuid();
         UserId = userId;
@@ -50,12 +52,12 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         FeePercent = feePercent;
         Status = OrderStatus.Pending;
         UserNote = userNote;
-        CreatedAt = DateTime.UtcNow;
+        CreatedAt = occurredAt;
 
         foreach (var tag in tags)
             _tags.Add(tag);
 
-        CalculateTotalAmount();
+        TotalAmount = totalAmount;
     }
 
     public static Result<GoldOrder> Create(
@@ -65,7 +67,8 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         Money unitPrice,
         Percentage feePercent,
         IEnumerable<Tag> tags,
-        string? userNote = null)
+        string? userNote = null,
+        DateTime? occurredAt = null)
     {
         if (userId == Guid.Empty)
         {
@@ -123,14 +126,33 @@ public sealed class GoldOrder : AggregateRoot<Guid>
                 ErrorType.Validation);
         }
 
+        var normalizedTags = (tags ?? Enumerable.Empty<Tag>()).ToArray();
+        if (normalizedTags.Any(tag => tag is null))
+            return Result<GoldOrder>.Failure("برچسب سفارش نمی‌تواند خالی باشد.", ErrorType.Validation);
+
+        Money totalAmount;
+        try
+        {
+            var baseAmount = weight.Value * unitPrice.Amount;
+            var feeAmount = baseAmount * (feePercent.Value / 100m);
+            var total = type == OrderType.Buy ? baseAmount + feeAmount : baseAmount - feeAmount;
+            totalAmount = Money.Create(total).Value!;
+        }
+        catch (OverflowException)
+        {
+            return Result<GoldOrder>.Failure("مبلغ سفارش از محدوده مجاز بیشتر است.", ErrorType.Validation);
+        }
+
         var order = new GoldOrder(
             userId,
             type,
             weight,
             unitPrice,
             feePercent,
-            tags ?? Enumerable.Empty<Tag>(),
-            userNote);
+            normalizedTags,
+            userNote,
+            totalAmount,
+            occurredAt ?? DateTime.UtcNow);
 
         if (type == OrderType.Buy)
         {
@@ -155,18 +177,6 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         return Result<GoldOrder>.Success(order);
     }
 
-    private void CalculateTotalAmount()
-    {
-        var baseAmount = Weight.Value * UnitPrice.Amount;
-        var feeAmount = baseAmount * (FeePercent.Value / 100m);
-
-        var total = Type == OrderType.Buy
-            ? baseAmount + feeAmount
-            : baseAmount - feeAmount;
-
-        TotalAmount = Money.Create(total).Value!;
-    }
-
     public Result UpdateMetadata(
         IEnumerable<Tag> newTags,
         string? newUserNote)
@@ -185,9 +195,13 @@ public sealed class GoldOrder : AggregateRoot<Guid>
                 ErrorType.Validation);
         }
 
+        var normalizedTags = newTags?.ToArray();
+        if (normalizedTags is null || normalizedTags.Any(tag => tag is null))
+            return Result.Failure("برچسب‌های سفارش نامعتبر است.", ErrorType.Validation);
+
         _tags.Clear();
 
-        foreach (var tag in newTags)
+        foreach (var tag in normalizedTags)
             _tags.Add(tag);
 
         UserNote = newUserNote;
@@ -195,7 +209,7 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         return Result.Success();
     }
 
-    public Result Complete()
+    public Result Complete(DateTime? occurredAt = null)
     {
         if (Status != OrderStatus.Pending)
         {
@@ -205,6 +219,8 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         }
 
         Status = OrderStatus.Settled;
+        RaiseDomainEvent(new GoldOrderSettledDomainEvent(
+            Id, UserId, Type, TotalAmount, occurredAt ?? DateTime.UtcNow));
 
         return Result.Success();
     }

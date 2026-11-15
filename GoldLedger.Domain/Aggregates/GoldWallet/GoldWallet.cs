@@ -14,30 +14,32 @@ public class GoldWallet : AggregateRoot<Guid>
 
     public GoldWeight AvailableBalance => Balance - LockedBalance;
 
-    private GoldWallet() { }
+    private GoldWallet()
+    {
+    }
 
-    private GoldWallet(Guid userId, GoldWeight balance)
+    private GoldWallet(Guid userId, GoldWeight balance, DateTime occurredAt)
     {
         Id = Guid.NewGuid();
         UserId = userId;
         Balance = balance;
         LockedBalance = GoldWeight.Zero;
-        CreatedAt = DateTime.UtcNow;
-        UpdatedAt = DateTime.UtcNow;
+        CreatedAt = occurredAt;
+        UpdatedAt = occurredAt;
     }
 
-    public static Result<GoldWallet> Create(Guid userId, GoldWeight? initialBalance = null)
+    public static Result<GoldWallet> Create(Guid userId, GoldWeight? initialBalance = null, DateTime? occurredAt = null)
     {
         if (userId == Guid.Empty)
             return Result<GoldWallet>.Failure("شناسه کاربر نامعتبر است.", ErrorType.Validation);
 
         var balance = initialBalance ?? GoldWeight.Zero;
 
-        var wallet = new GoldWallet(userId, balance);
+        var wallet = new GoldWallet(userId, balance, occurredAt ?? DateTime.UtcNow);
         return Result<GoldWallet>.Success(wallet);
     }
 
-    public Result Deposit(GoldWeight weight)
+    public Result Deposit(GoldWeight weight, DateTime? occurredAt = null)
     {
         if (weight is null)
             return Result.Failure("مقدار واریز نمی‌تواند خالی باشد.", ErrorType.Validation);
@@ -45,13 +47,16 @@ public class GoldWallet : AggregateRoot<Guid>
         if (weight.Value <= 0)
             return Result.Failure("مقدار واریز باید بیشتر از صفر باشد.", ErrorType.Validation);
 
+        if (weight.Value > decimal.MaxValue - Balance.Value)
+            return Result.Failure("موجودی کیف پول از محدوده مجاز بیشتر می‌شود.", ErrorType.Validation);
+
         Balance += weight;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = occurredAt ?? DateTime.UtcNow;
 
         return Result.Success();
     }
 
-    public Result Withdraw(GoldWeight weight)
+    public Result Withdraw(GoldWeight weight, DateTime? occurredAt = null)
     {
         if (weight is null)
             return Result.Failure("مقدار برداشت نمی‌تواند خالی باشد.", ErrorType.Validation);
@@ -63,12 +68,12 @@ public class GoldWallet : AggregateRoot<Guid>
             return Result.Failure("موجودی آزاد کیف پول برای انجام این عملیات کافی نیست.", ErrorType.Validation);
 
         Balance -= weight;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = occurredAt ?? DateTime.UtcNow;
 
         return Result.Success();
     }
 
-    public Result Lock(GoldWeight weight)
+    public Result Lock(GoldWeight weight, DateTime? occurredAt = null)
     {
         if (weight is null)
             return Result.Failure("مقدار مسدودسازی نمی‌تواند خالی باشد.", ErrorType.Validation);
@@ -80,15 +85,18 @@ public class GoldWallet : AggregateRoot<Guid>
             return Result.Failure("موجودی آزاد کافی برای مسدودسازی وجود ندارد.", ErrorType.Validation);
 
         LockedBalance += weight;
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = occurredAt ?? DateTime.UtcNow;
 
         return Result.Success();
     }
 
-    public Result ReleaseLocked(GoldWeight weight, bool isSettled)
+    public Result ReleaseLocked(GoldWeight weight, bool isSettled, DateTime? occurredAt = null)
     {
         if (weight is null)
             return Result.Failure("مقدار قابل آزادسازی نمی‌تواند خالی باشد.", ErrorType.Validation);
+
+        if (weight.Value <= 0)
+            return Result.Failure("مقدار قابل آزادسازی باید بیشتر از صفر باشد.", ErrorType.Validation);
 
         if (LockedBalance < weight)
             return Result.Failure("مقدار درخواستی بیشتر از موجودی مسدودشده است.", ErrorType.Validation);
@@ -98,9 +106,7 @@ public class GoldWallet : AggregateRoot<Guid>
         if (isSettled)
             Balance -= weight;
 
-        UpdatedAt = DateTime.UtcNow;
+        UpdatedAt = occurredAt ?? DateTime.UtcNow;
         return Result.Success();
     }
 }
-
-
