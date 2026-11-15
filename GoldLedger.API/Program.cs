@@ -1,49 +1,44 @@
-﻿using GoldLedger.Application.Contracts.Common;
 using GoldLedger.Application.Contracts.Services;
 using GoldLedger.Application.Services;
-using GoldLedger.Domain.Repositories;
-using GoldLedger.Infrastructure.Persistence;
-using GoldLedger.Infrastructure.Repositories;
-using Microsoft.EntityFrameworkCore;
-using GoldLedger.Infrastructure.Time;
-using GoldLedger.Infrastructure.Payments;
+using GoldLedger.Infrastructure;
 
-namespace GoldLedger.API
+namespace GoldLedger.API;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
+
+        var connectionString =
+            builder.Configuration.GetConnectionString("GoldLedger")
+            ?? throw new InvalidOperationException(
+                "Connection string 'GoldLedger' is not configured.");
+
+        builder.Services.AddInfrastructure(connectionString);
+
+        builder.Services.AddScoped<IWalletService, WalletService>();
+        builder.Services.AddScoped<IOrderService, OrderService>();
+
+        var app = builder.Build();
+
+        app.UseSwagger();
+
+        app.UseSwaggerUI(options =>
         {
-            var builder = WebApplication.CreateBuilder(args);
+            options.SwaggerEndpoint(
+                "/swagger/v1/swagger.json",
+                "GoldLedger API v1");
 
-            builder.Services.AddControllers();
+            options.RoutePrefix = string.Empty;
+        });
 
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+        app.MapControllers();
 
-            builder.Services.AddDbContext<GoldLedgerDbContext>(options =>
-                options.UseSqlite(builder.Configuration.GetConnectionString("GoldLedger")));
-            builder.Services.AddScoped<IGoldWalletRepository, GoldWalletRepository>();
-            builder.Services.AddScoped<IGoldOrderRepository, GoldOrderRepository>();
-            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-            builder.Services.AddSingleton<IClock, TehranClock>();
-            builder.Services.AddScoped<IPaymentSettlementService, PaymentSettlementService>();
-
-            builder.Services.AddScoped<IWalletService, WalletService>();
-            builder.Services.AddScoped<IOrderService, OrderService>();
-
-            var app = builder.Build();
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "GoldLedger API v1");
-                c.RoutePrefix = string.Empty;
-            });
-            app.MapControllers();
-
-            app.Run();
-        }
+        app.Run();
     }
 }
-
-
