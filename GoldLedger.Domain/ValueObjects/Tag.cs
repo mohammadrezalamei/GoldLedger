@@ -26,3 +26,4 @@ public sealed class Tag : ValueObject<Tag>
     }
     public override string ToString() => Value;
 }
+

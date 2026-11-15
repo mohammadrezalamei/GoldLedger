@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Aggregates.GoldWallet;
+﻿using GoldLedger.Domain.Aggregates.GoldWallet;
 using GoldLedger.Domain.Repositories;
 using GoldLedger.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -27,4 +27,5 @@ public sealed class GoldWalletRepository(GoldLedgerDbContext context) : IGoldWal
         context.Wallets.Update(wallet);
     }
 }
+
 

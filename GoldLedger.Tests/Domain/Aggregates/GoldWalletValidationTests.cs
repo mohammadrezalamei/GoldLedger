@@ -22,3 +22,4 @@ public sealed class GoldWalletValidationTests
         Assert.Equal(3m, wallet.Balance.Value);
     }
 }
+

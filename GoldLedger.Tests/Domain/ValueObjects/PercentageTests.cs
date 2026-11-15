@@ -33,3 +33,4 @@ public sealed class PercentageTests
         Assert.Equal(30m, calculatedAmount.Amount);
     }
 }
+

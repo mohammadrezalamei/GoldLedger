@@ -29,3 +29,4 @@ public sealed class Money : ValueObject<Money>
     }
     public override string ToString() => Amount.ToString("N2");
 }
+

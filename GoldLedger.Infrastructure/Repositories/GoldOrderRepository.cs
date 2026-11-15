@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Aggregates.GoldOrder;
+﻿using GoldLedger.Domain.Aggregates.GoldOrder;
 using GoldLedger.Domain.Repositories;
 using GoldLedger.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -27,4 +27,5 @@ public sealed class GoldOrderRepository(GoldLedgerDbContext context) : IGoldOrde
         context.Orders.Update(order);
     }
 }
+
 

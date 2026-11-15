@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Aggregates.GoldOrder;
+﻿using GoldLedger.Domain.Aggregates.GoldOrder;
 
 namespace GoldLedger.Domain.Repositories;
 
@@ -9,3 +9,4 @@ public interface IGoldOrderRepository
     public Task<IEnumerable<GoldOrder>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
     public void Update(GoldOrder order);
 }
+

@@ -26,3 +26,4 @@ public sealed class GoldOrderConfiguration : IEntityTypeConfiguration<GoldOrder>
         });
     }
 }
+

@@ -72,3 +72,4 @@ public sealed class GoldOrderTests
         return GoldOrder.Create(Guid.NewGuid(), orderType, GoldWeight.Create(weightValue).Value!, Money.Create(unitPrice).Value!, Percentage.Create(feePercent).Value!, []).Value!;
     }
 }
+

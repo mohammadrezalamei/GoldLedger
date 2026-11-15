@@ -38,3 +38,4 @@ public sealed class TagTests
         Assert.Equal(firstTag, secondTag);
     }
 }
+

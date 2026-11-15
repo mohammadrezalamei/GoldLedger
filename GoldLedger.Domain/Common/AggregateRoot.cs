@@ -1,4 +1,4 @@
-namespace GoldLedger.Domain.Common;
+﻿namespace GoldLedger.Domain.Common;
 
 public abstract class AggregateRoot<TId> : Entity<TId>
 {
@@ -16,3 +16,4 @@ public abstract class AggregateRoot<TId> : Entity<TId>
         _domainEvents.Clear();
     }
 }
+

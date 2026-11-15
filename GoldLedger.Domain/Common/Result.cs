@@ -1,4 +1,4 @@
-namespace GoldLedger.Domain.Common
+﻿namespace GoldLedger.Domain.Common
 {
     public class Result
     {
@@ -35,4 +35,5 @@ namespace GoldLedger.Domain.Common
             => new(default, false, errorMessage, errorType);
     }
 }
+
 

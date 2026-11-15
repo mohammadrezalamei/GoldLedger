@@ -1,4 +1,4 @@
-<Solution>
+﻿<Solution>
   <Folder Name="/Solution Items/">
     <File Path="README.md" />
   </Folder>
@@ -8,3 +8,4 @@
   <Project Path="GoldLedger.Infrastructure/GoldLedger.Infrastructure.csproj" />
   <Project Path="GoldLedger.Tests/GoldLedger.Tests.csproj" />
 </Solution>
+

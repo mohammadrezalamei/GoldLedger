@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 
 namespace GoldLedger.Domain.ValueObjects;
 
@@ -16,7 +16,7 @@ public class Percentage : ValueObject<Percentage>
         var normalizedValue = Math.Round(value, 2, MidpointRounding.AwayFromZero);
 
         if (normalizedValue < 0 || normalizedValue > 100)
-            return Result<Percentage>.Failure("درصد کارمزد باید عددی بین ۰ تا ۱۰۰ باشد.", ErrorType.Validation);
+            return Result<Percentage>.Failure("Ø¯Ø±ØµØ¯ Ú©Ø§Ø±Ù…Ø²Ø¯ Ø¨Ø§ÛŒØ¯ Ø¹Ø¯Ø¯ÛŒ Ø¨ÛŒÙ† Û° ØªØ§ Û±Û°Û° Ø¨Ø§Ø´Ø¯.", ErrorType.Validation);
 
         return Result<Percentage>.Success(new Percentage(normalizedValue));
     }
@@ -49,3 +49,4 @@ public class Percentage : ValueObject<Percentage>
 
     public override string ToString() => $"{Value:N2}%";
 }
+

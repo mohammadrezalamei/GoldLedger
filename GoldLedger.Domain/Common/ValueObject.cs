@@ -1,4 +1,4 @@
-namespace GoldLedger.Domain.Common;
+﻿namespace GoldLedger.Domain.Common;
 
 public abstract class ValueObject<T> : IEquatable<T> where T : ValueObject<T>
 {
@@ -39,3 +39,4 @@ public abstract class ValueObject<T> : IEquatable<T> where T : ValueObject<T>
 
     public static bool operator !=(ValueObject<T>? left, ValueObject<T>? right) => !(left == right);
 }
+

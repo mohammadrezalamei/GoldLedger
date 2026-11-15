@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 
 namespace GoldLedger.Application.Contracts.Common
 {
@@ -7,4 +7,5 @@ namespace GoldLedger.Application.Contracts.Common
         public Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
+
 

@@ -1,3 +1,4 @@
-namespace GoldLedger.Application.DTOs.Wallets;
+﻿namespace GoldLedger.Application.DTOs.Wallets;
 
 public record WithdrawRequestDto(decimal Amount);
+

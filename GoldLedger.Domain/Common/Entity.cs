@@ -1,4 +1,4 @@
-namespace GoldLedger.Domain.Common;
+﻿namespace GoldLedger.Domain.Common;
 
 public abstract class Entity<TId>
 {
@@ -23,3 +23,4 @@ public abstract class Entity<TId>
         return EqualityComparer<TId>.Default.GetHashCode(Id!) * 31;
     }
 }
+

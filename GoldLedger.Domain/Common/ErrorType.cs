@@ -1,4 +1,4 @@
-namespace GoldLedger.Domain.Common
+﻿namespace GoldLedger.Domain.Common
 {
     public enum ErrorType
     {
@@ -9,4 +9,5 @@ namespace GoldLedger.Domain.Common
         ServerError = 4
     }
 }
+
 

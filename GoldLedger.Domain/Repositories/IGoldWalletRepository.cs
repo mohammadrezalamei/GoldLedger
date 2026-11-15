@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Aggregates.GoldWallet;
+﻿using GoldLedger.Domain.Aggregates.GoldWallet;
 
 namespace GoldLedger.Domain.Repositories;
 
@@ -9,3 +9,4 @@ public interface IGoldWalletRepository
     public Task AddAsync(GoldWallet wallet, CancellationToken cancellationToken = default);
     public void Update(GoldWallet wallet);
 }
+

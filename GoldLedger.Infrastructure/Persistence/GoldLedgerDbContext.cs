@@ -11,3 +11,4 @@ public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GoldLedgerDbContext).Assembly);
     }
 }
+

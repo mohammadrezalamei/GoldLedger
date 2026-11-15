@@ -16,3 +16,4 @@ public sealed class TagBoundaryTests
         Assert.False(result.IsSuccess);
     }
 }
+

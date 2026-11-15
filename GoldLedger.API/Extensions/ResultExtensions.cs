@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GoldLedger.API.Extensions
@@ -44,3 +44,4 @@ namespace GoldLedger.API.Extensions
         }
     }
 }
+

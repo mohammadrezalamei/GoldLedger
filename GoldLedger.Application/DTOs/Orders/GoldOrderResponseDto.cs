@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Aggregates.GoldOrder;
+﻿using GoldLedger.Domain.Aggregates.GoldOrder;
 
 namespace GoldLedger.Application.DTOs.Orders;
 
@@ -15,4 +15,5 @@ public record GoldOrderResponseDto(
     IEnumerable<string> Tags,
     DateTime CreatedAt
 );
+
 

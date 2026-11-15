@@ -1,4 +1,4 @@
-namespace GoldLedger.Application.DTOs.Wallets;
+﻿namespace GoldLedger.Application.DTOs.Wallets;
 
 public record WalletResponseDto(
     Guid Id,
@@ -7,3 +7,4 @@ public record WalletResponseDto(
     decimal LockedBalanceValue,
     decimal AvailableBalanceValue
 );
+

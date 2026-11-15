@@ -1,5 +1,6 @@
-namespace GoldLedger.Application.DTOs.Wallets;
+﻿namespace GoldLedger.Application.DTOs.Wallets;
 
 public record DepositRequestDto(
     decimal Amount
 );
+
