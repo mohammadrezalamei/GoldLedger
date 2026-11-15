@@ -12,31 +12,70 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (context.Response.HasStarted)
+            return false;
+
         if (exception is OperationCanceledException && context.RequestAborted.IsCancellationRequested)
         {
             context.Response.StatusCode = StatusCodes.Status499ClientClosedRequest;
+            logger.LogDebug("Request cancelled by client. TraceId: {TraceId}", context.TraceIdentifier);
             return true;
         }
 
-        var sqliteException = exception as SqliteException ?? exception.InnerException as SqliteException;
-        var conflict = exception is DbUpdateConcurrencyException ||
-            sqliteException is { SqliteErrorCode: 5 or 6 } ||
-            sqliteException is { SqliteExtendedErrorCode: 1555 or 2067 };
-        var badRequest = exception is BadHttpRequestException;
-        var statusCode = conflict ? StatusCodes.Status409Conflict
-            : badRequest ? ((BadHttpRequestException)exception).StatusCode
-            : StatusCodes.Status500InternalServerError;
-        var errorType = conflict ? ErrorType.Conflict
-            : badRequest ? ErrorType.Validation
-            : ErrorType.ServerError;
-        var message = conflict ? "درخواست با تغییر هم‌زمان یا داده تکراری تداخل دارد؛ دوباره تلاش کنید."
-            : badRequest ? "ساختار درخواست نامعتبر است."
-            : "خطایی در پردازش درخواست رخ داد.";
+        var (statusCode, errorType, message) = MapException(exception);
+        var result = Result.Failure(message, errorType);
 
-        logger.LogError(exception, "Request failed. TraceId: {TraceId}", context.TraceIdentifier);
+        if (statusCode >= StatusCodes.Status500InternalServerError)
+        {
+            logger.LogError(exception, "Request failed with status {StatusCode}. TraceId: {TraceId}",
+                statusCode, context.TraceIdentifier);
+        }
+        else
+        {
+            logger.LogWarning(exception, "Request rejected with status {StatusCode}. TraceId: {TraceId}",
+                statusCode, context.TraceIdentifier);
+        }
+
         context.Response.StatusCode = statusCode;
         context.Response.Headers["X-Trace-Id"] = context.TraceIdentifier;
-        await context.Response.WriteAsJsonAsync(Result.Failure(message, errorType), cancellationToken);
+        await context.Response.WriteAsJsonAsync(result, cancellationToken);
         return true;
+    }
+
+    private static (int StatusCode, ErrorType ErrorType, string Message) MapException(Exception exception)
+    {
+        if (exception is BadHttpRequestException badRequest)
+        {
+            return (badRequest.StatusCode, ErrorType.Validation,
+                "ساختار درخواست نامعتبر است.");
+        }
+
+        if (exception is DbUpdateConcurrencyException)
+        {
+            return (StatusCodes.Status409Conflict, ErrorType.Conflict,
+                "داده‌ها توسط درخواست دیگری تغییر کرده‌اند؛ اطلاعات را تازه‌سازی و دوباره تلاش کنید.");
+        }
+
+        var sqliteException = exception switch
+        {
+            SqliteException sqlite => sqlite,
+            DbUpdateException { InnerException: SqliteException sqlite } => sqlite,
+            _ => null
+        };
+
+        if (sqliteException is { SqliteExtendedErrorCode: 1555 or 2067 })
+        {
+            return (StatusCodes.Status409Conflict, ErrorType.Conflict,
+                "درخواست با داده‌ای که قبلاً ثبت شده است تداخل دارد.");
+        }
+
+        if (sqliteException is { SqliteErrorCode: 5 or 6 })
+        {
+            return (StatusCodes.Status409Conflict, ErrorType.Conflict,
+                "داده‌ها در حال پردازش توسط درخواست دیگری هستند؛ دوباره تلاش کنید.");
+        }
+
+        return (StatusCodes.Status500InternalServerError, ErrorType.ServerError,
+            "خطایی در پردازش درخواست رخ داد.");
     }
 }
