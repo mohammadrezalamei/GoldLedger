@@ -8,7 +8,14 @@ public class Percentage : ValueObject<Percentage>
 
     private Percentage(decimal value)
     {
-        Value = value;
+        if (value < 0 || value > 100)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(value),
+                "درصد کارمزد باید عددی بین ۰ تا ۱۰۰ باشد.");
+        }
+
+        Value = Math.Round(value, 2, MidpointRounding.AwayFromZero);
     }
 
     public static Result<Percentage> Create(decimal value)
@@ -20,13 +27,7 @@ public class Percentage : ValueObject<Percentage>
                 ErrorType.Validation);
         }
 
-        var normalizedValue = Math.Round(
-            value,
-            2,
-            MidpointRounding.AwayFromZero);
-
-        return Result<Percentage>.Success(
-            new Percentage(normalizedValue));
+        return Result<Percentage>.Success(new Percentage(value));
     }
 
     protected override IEnumerable<object?> GetEqualityComponents()
@@ -46,34 +47,46 @@ public class Percentage : ValueObject<Percentage>
         return money.CalculatePercentage(this);
     }
 
-    public static Percentage operator +(
-        Percentage left,
-        Percentage right)
-        => new(left.Value + right.Value);
+    public static Percentage operator +(Percentage left, Percentage right)
+    {
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
 
-    public static Percentage operator -(
-        Percentage left,
-        Percentage right)
-        => new(left.Value - right.Value);
+        var sum = left.Value + right.Value;
 
-    public static bool operator <(
-        Percentage left,
-        Percentage right)
+        if (sum > 100)
+        {
+            throw new InvalidOperationException(
+                "مجموع درصدها نمی‌تواند بیشتر از ۱۰۰ باشد.");
+        }
+
+        return new Percentage(sum);
+    }
+
+    public static Percentage operator -(Percentage left, Percentage right)
+    {
+        ArgumentNullException.ThrowIfNull(left);
+        ArgumentNullException.ThrowIfNull(right);
+
+        if (left.Value < right.Value)
+        {
+            throw new InvalidOperationException(
+                "نتیجه تفریق درصد نمی‌تواند منفی باشد.");
+        }
+
+        return new Percentage(left.Value - right.Value);
+    }
+
+    public static bool operator <(Percentage left, Percentage right)
         => left.Value < right.Value;
 
-    public static bool operator >(
-        Percentage left,
-        Percentage right)
+    public static bool operator >(Percentage left, Percentage right)
         => left.Value > right.Value;
 
-    public static bool operator <=(
-        Percentage left,
-        Percentage right)
+    public static bool operator <=(Percentage left, Percentage right)
         => left.Value <= right.Value;
 
-    public static bool operator >=(
-        Percentage left,
-        Percentage right)
+    public static bool operator >=(Percentage left, Percentage right)
         => left.Value >= right.Value;
 
     public static readonly Percentage Zero = new(0m);
