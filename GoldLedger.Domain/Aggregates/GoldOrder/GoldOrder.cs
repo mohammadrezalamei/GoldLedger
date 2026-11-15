@@ -1,4 +1,4 @@
-﻿using GoldLedger.Domain.Common;
+using GoldLedger.Domain.Common;
 using GoldLedger.Domain.ValueObjects;
 namespace GoldLedger.Domain.Aggregates.GoldOrder;
 public sealed class GoldOrder : AggregateRoot<Guid>
@@ -18,8 +18,19 @@ public sealed class GoldOrder : AggregateRoot<Guid>
     private GoldOrder() { }
     private GoldOrder(Guid userId, OrderType type, GoldWeight weight, Money unitPrice, Percentage feePercent, IEnumerable<Tag> tags, string? userNote)
     {
-        Id = Guid.NewGuid(); UserId = userId; Type = type; Weight = weight; UnitPrice = unitPrice; FeePercent = feePercent; Status = OrderStatus.Pending; UserNote = userNote; CreatedAt = DateTime.UtcNow;
-        foreach (var tag in tags) _tags.Add(tag);
+        Id = Guid.NewGuid(); 
+        UserId = userId; 
+        Type = type; 
+        Weight = weight; 
+        UnitPrice = unitPrice; 
+        FeePercent = feePercent; 
+        Status = OrderStatus.Pending; 
+        UserNote = userNote; 
+        CreatedAt = DateTime.UtcNow;
+
+        foreach (var tag in tags) 
+            _tags.Add(tag);
+
         CalculateTotalAmount();
     }
     public static Result<GoldOrder> Create(Guid userId, OrderType type, GoldWeight weight, Money unitPrice, Percentage feePercent, IEnumerable<Tag> tags, string? userNote = null)
