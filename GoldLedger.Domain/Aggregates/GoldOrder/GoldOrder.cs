@@ -1,4 +1,4 @@
-using GoldLedger.Domain.Common;
+﻿using GoldLedger.Domain.Common;
 using GoldLedger.Domain.ValueObjects;
 namespace GoldLedger.Domain.Aggregates.GoldOrder;
 public sealed class GoldOrder : AggregateRoot<Guid>
@@ -81,9 +81,9 @@ public sealed class GoldOrder : AggregateRoot<Guid>
         _tags.Clear();
 
         foreach (var tag in newTags)
-        {
-            _tags.Add(tag); UserNote = newUserNote;
-        }
+            _tags.Add(tag);
+
+        UserNote = newUserNote;
 
         return Result.Success();
     }
