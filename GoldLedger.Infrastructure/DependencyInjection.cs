@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IGoldOrderRepository, GoldOrderRepository>();
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IIdempotencyService, IdempotencyService>();
         services.AddScoped<IDomainEventDispatcher, DomainEventDispatcher>();
 
         services.AddSingleton(TimeProvider.System);

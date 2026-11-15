@@ -10,6 +10,7 @@ public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> op
     public DbSet<GoldOrder> Orders => Set<GoldOrder>();
     public DbSet<PaymentSettlement> PaymentSettlements => Set<PaymentSettlement>();
     public DbSet<DomainEventRecord> DomainEventRecords => Set<DomainEventRecord>();
+    public DbSet<IdempotencyRecord> IdempotencyRecords => Set<IdempotencyRecord>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

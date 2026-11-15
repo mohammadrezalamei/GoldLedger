@@ -175,6 +175,40 @@ namespace GoldLedger.Infrastructure.Persistence.Migrations
                     b.ToTable("DomainEventRecords", (string)null);
                 });
 
+            modelBuilder.Entity("GoldLedger.Infrastructure.Persistence.IdempotencyRecord", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Location")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("StatusCode")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("IdempotencyRecords", (string)null);
+                });
+
             modelBuilder.Entity("GoldLedger.Domain.Aggregates.GoldOrder.GoldOrder", b =>
                 {
                     b.OwnsMany("GoldLedger.Domain.ValueObjects.Tag", "Tags", b1 =>

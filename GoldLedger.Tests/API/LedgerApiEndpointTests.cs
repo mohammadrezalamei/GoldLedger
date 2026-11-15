@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using GoldLedger.Application.DTOs.Orders;
@@ -16,7 +17,7 @@ public sealed class LedgerApiEndpointTests : IClassFixture<LedgerApiFactory>
     private readonly HttpClient httpClient;
     public LedgerApiEndpointTests(LedgerApiFactory factory)
     {
-        httpClient = factory.CreateClient();
+        httpClient = factory.CreateDefaultClient(new IdempotencyKeyHandler());
     }
     [Fact]
     public async Task Get_missing_wallet_returns_not_found()
@@ -139,21 +140,36 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>
     private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"goldledger-api-{Guid.NewGuid():N}.db");
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseSetting("ConnectionStrings:GoldLedger", $"Data Source={databasePath}");
+        builder.UseSetting("ConnectionStrings:GoldLedger", $"Data Source={databasePath};Pooling=False");
     }
     protected override IHost CreateHost(IHostBuilder builder)
     {
         var host = base.CreateHost(builder);
         using var scope = host.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<GoldLedgerDbContext>();
-        context.Database.EnsureCreated();
+        context.Database.Migrate();
         return host;
     }
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
 
+        if (disposing && File.Exists(databasePath))
+            File.Delete(databasePath);
     }
 }
 
 
+
+internal sealed class IdempotencyKeyHandler : DelegatingHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(
+        HttpRequestMessage request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Method != HttpMethod.Get && !request.Headers.Contains("Idempotency-Key"))
+            request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+
+        return base.SendAsync(request, cancellationToken);
+    }
+}
