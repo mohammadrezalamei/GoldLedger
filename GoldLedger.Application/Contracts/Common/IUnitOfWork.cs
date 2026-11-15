@@ -1,11 +1,11 @@
-﻿using GoldLedger.Domain.Common;
+using GoldLedger.Domain.Common;
 
-namespace GoldLedger.Application.Contracts.Common
+namespace GoldLedger.Application.Contracts.Common;
+
+public interface IUnitOfWork
 {
-    public interface IUnitOfWork
-    {
-        public Task<Result> SaveChangesAsync(CancellationToken cancellationToken = default);
-    }
+    Task<Result> SaveChangesAsync(
+        CancellationToken cancellationToken = default);
+
+    void DiscardChanges();
 }
-
-
