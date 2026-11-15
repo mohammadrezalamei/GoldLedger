@@ -5,7 +5,8 @@ using GoldLedger.Infrastructure.Persistence;
 using GoldLedger.Infrastructure.Time;
 using Microsoft.EntityFrameworkCore;
 
-namespace GoldLedger.Tests.Infrastructure;
+namespace GoldLedger.Tests.Infrastructure.Persistence;
+
 
 public sealed class IdempotencyTransactionTests
 {
@@ -15,7 +16,7 @@ public sealed class IdempotencyTransactionTests
     [InlineData(500)]
     public async Task Failed_response_rolls_back_even_changes_already_saved_by_action(int statusCode)
     {
-        await using var database = new LedgerTestDatabase();
+        await using var database = new SqliteTestDatabase();
         await database.InitializeAsync();
         await using var context = database.CreateContext();
         var service = CreateService(context);
@@ -37,7 +38,7 @@ public sealed class IdempotencyTransactionTests
     [Fact]
     public async Task Exception_after_saved_business_changes_rolls_back_everything()
     {
-        await using var database = new LedgerTestDatabase();
+        await using var database = new SqliteTestDatabase();
         await database.InitializeAsync();
         await using var context = database.CreateContext();
 
@@ -60,7 +61,7 @@ public sealed class IdempotencyTransactionTests
     [Fact]
     public async Task Cancellation_after_saved_business_changes_rolls_back_everything()
     {
-        await using var database = new LedgerTestDatabase();
+        await using var database = new SqliteTestDatabase();
         await database.InitializeAsync();
         await using var context = database.CreateContext();
         using var cancellation = new CancellationTokenSource();
@@ -85,7 +86,7 @@ public sealed class IdempotencyTransactionTests
     [Fact]
     public async Task Committed_response_survives_new_context_and_preserves_location_and_content_type()
     {
-        await using var database = new LedgerTestDatabase();
+        await using var database = new SqliteTestDatabase();
         await database.InitializeAsync();
         var key = Key();
         var expected = new IdempotencyResponse(201, "{\"value\":1}", "application/json; charset=utf-8", "/api/orders/1");
@@ -116,7 +117,7 @@ public sealed class IdempotencyTransactionTests
     [Fact]
     public async Task Mismatched_request_hash_does_not_execute_or_replace_original_record()
     {
-        await using var database = new LedgerTestDatabase();
+        await using var database = new SqliteTestDatabase();
         await database.InitializeAsync();
         await using var context = database.CreateContext();
         var key = Key();
@@ -144,7 +145,7 @@ public sealed class IdempotencyTransactionTests
 
     private static IdempotencyService CreateService(GoldLedgerDbContext context)
     {
-        return new IdempotencyService(context, LedgerTestDatabase.CreateUnitOfWork(context),
+        return new IdempotencyService(context, SqliteTestDatabase.CreateUnitOfWork(context),
             new TehranClock(TimeProvider.System));
     }
 }

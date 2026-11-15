@@ -1,4 +1,5 @@
 ﻿using GoldLedger.Application.Services;
+using Microsoft.Data.Sqlite;
 using GoldLedger.Domain.Aggregates.GoldWallet;
 using GoldLedger.Domain.ValueObjects;
 using GoldLedger.Infrastructure.Persistence;
@@ -9,7 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace GoldLedger.Tests.Infrastructure;
 
-internal sealed class LedgerTestDatabase : IAsyncDisposable
+internal sealed class SqliteTestDatabase : IAsyncDisposable
 {
     private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"ledger-integrity-{Guid.NewGuid():N}.db");
 
@@ -51,5 +52,31 @@ internal sealed class LedgerTestDatabase : IAsyncDisposable
         if (File.Exists(databasePath))
             File.Delete(databasePath);
         return ValueTask.CompletedTask;
+    }
+
+    public static DbContextOptions<GoldLedgerDbContext> CreateOptions(
+        SqliteConnection connection)
+    {
+        return new DbContextOptionsBuilder<GoldLedgerDbContext>()
+            .UseSqlite(connection)
+            .Options;
+    }
+
+    public static async Task CreateWalletAsync(
+        DbContextOptions<GoldLedgerDbContext> options,
+        Guid userId,
+        decimal balance)
+    {
+        await using var context = new GoldLedgerDbContext(options);
+
+        await context.Database.EnsureCreatedAsync();
+
+        var wallet = GoldWallet.Create(userId).Value!;
+
+        wallet.Deposit(GoldWeight.Create(balance).Value!);
+
+        context.Wallets.Add(wallet);
+
+        await context.SaveChangesAsync();
     }
 }

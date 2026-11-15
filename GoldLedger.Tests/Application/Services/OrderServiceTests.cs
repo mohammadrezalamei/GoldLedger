@@ -1,4 +1,4 @@
-using GoldLedger.Application.DTOs.Orders;
+﻿using GoldLedger.Application.DTOs.Orders;
 using GoldLedger.Application.Services;
 using GoldLedger.Domain.Aggregates.GoldOrder;
 using GoldLedger.Domain.Aggregates.GoldWallet;
@@ -10,9 +10,9 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace GoldLedger.Tests.Application;
+namespace GoldLedger.Tests.Application.Services;
 
-public sealed class OrderServicePersistenceTests
+public sealed class OrderServiceTests
 {
     [Theory]
     [InlineData(false, false)]
@@ -36,8 +36,6 @@ public sealed class OrderServicePersistenceTests
 
         var userId = Guid.NewGuid();
 
-        // Deliberately create an inconsistent state to exercise failure paths:
-        // either the wallet is missing, or it has no locked balance.
         if (!missingWallet)
         {
             var wallet = GoldWallet.Create(
@@ -74,7 +72,6 @@ public sealed class OrderServicePersistenceTests
 
         Assert.Empty(context.ChangeTracker.Entries());
 
-        // A later save must not accidentally persist the failed transition.
         await context.SaveChangesAsync();
 
         await using var readContext = new GoldLedgerDbContext(options);
@@ -173,7 +170,6 @@ public sealed class OrderServicePersistenceTests
 
         Assert.Equal(0m, persistedWallet.LockedBalance.Value);
 
-        // Repeating the transition must fail without changing the balance.
         var repeatedResult = cancel
             ? await service.CancelOrderAsync(orderId)
             : await service.CompleteOrderAsync(orderId);
