@@ -137,6 +137,9 @@ public sealed class GoldOrder : AggregateRoot<Guid>
             var feeAmount = baseAmount * (feePercent.Value / 100m);
             var total = type == OrderType.Buy ? baseAmount + feeAmount : baseAmount - feeAmount;
             totalAmount = Money.Create(total).Value!;
+
+            if (type == OrderType.Buy && totalAmount.Amount == 0)
+                return Result<GoldOrder>.Failure("مبلغ نهایی خرید پس از گردکردن باید بیشتر از صفر باشد.", ErrorType.Validation);
         }
         catch (OverflowException)
         {
