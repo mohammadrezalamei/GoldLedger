@@ -1,0 +1,25 @@
+﻿name: Verify GoldLedger
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore GoldLedger.slnx
+      - run: dotnet build GoldLedger.slnx --configuration Release --no-restore
+      - run: dotnet test GoldLedger.slnx --configuration Release --no-build --logger trx --results-directory TestResults
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: TestResults/*.trx

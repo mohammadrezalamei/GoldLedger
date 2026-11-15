@@ -22,6 +22,26 @@ PaymentSettlements has one entry per order. Matching settlement requests are ide
 
 Use UnitOfWork for application writes so that event handling and settlement run. Direct DbContext.SaveChanges is reserved for infrastructure work.
 
+## Request retries and errors
+
+Every POST and PATCH requires an Idempotency-Key header. Generate a unique key per logical operation, and reuse it when retrying that operation. Keys contain 1–128 ASCII letters, digits, dots, hyphens or underscores. For example:
+
+```http
+POST /api/wallets/user/11111111-1111-1111-1111-111111111111/deposit
+Content-Type: application/json
+Idempotency-Key: deposit-20261115-001
+
+{"amount": 1.5}
+```
+
+The key is global across mutation endpoints. The fingerprint includes HTTP method, route and bound request arguments. Reusing a key with different input returns 409. A matching retry returns the original successful body, status and Location, with Idempotency-Replayed: true. First execution returns false. GET requests do not require a key.
+
+Business changes and the successful response are committed in one SQLite transaction. Concurrent writes wait for SQLite's write lock; lock timeouts return 409 and can be retried with the same key. Domain concurrency tokens also protect callers that execute application services directly. Failed responses, exceptions and cancellation roll back the outer transaction and do not reserve the key. Successful keys are retained without expiry; deleting a record would permit that operation to execute again.
+
+Missing or invalid keys return 422 through domain validation. Malformed request bodies return 400. Unexpected errors, including read failures, return a sanitized Result envelope and X-Trace-Id; diagnostic details remain in server logs.
+
+Buy orders whose total rounds to zero are rejected. Monetary rounding follows Money's midpoint-to-even policy; a sale with a 100% fee can have zero net proceeds.
+
 ## Time
 
 Production services use an injected clock backed by TimeProvider. Dates are stored in UTC; order response timestamps include the Asia/Tehran offset. Domain methods accept an explicit occurrence time for deterministic callers.
@@ -39,6 +59,8 @@ dotnet run --project GoldLedger.API
 
 Swagger UI is available at the application root. Database migrations are explicit; the API does not create or migrate tables at startup.
 
+The AddRequestIdempotency migration adds durable request-response records. Relative SQLite paths are resolved against the API content root.
+
 The EnforceLedgerIntegrityAndSettlement migration adds settlement/event tables and database constraints. Existing invalid records must be corrected before this migration can succeed. Existing settled orders are not backfilled with invented payment records.
 
 ## Verification
@@ -46,5 +68,7 @@ The EnforceLedgerIntegrityAndSettlement migration adds settlement/event tables a
 ```powershell
 dotnet test GoldLedger.slnx
 ```
+
+Tests cover real file-backed SQLite migrations, stale writes, concurrent completion/cancellation, tag concurrency, internal settlement, transaction rollback and HTTP retries through WebApplicationFactory. The CI workflow builds and tests Release on Windows and Linux.
 
 Source files use UTF-8 and CRLF line endings.

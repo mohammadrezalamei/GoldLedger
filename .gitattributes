@@ -1,5 +1,8 @@
-﻿*.cs text working-tree-encoding=UTF-8
-*.csproj text working-tree-encoding=UTF-8
-*.json text working-tree-encoding=UTF-8
-*.md text working-tree-encoding=UTF-8
-
+﻿*.cs text working-tree-encoding=UTF-8 eol=crlf
+*.csproj text working-tree-encoding=UTF-8 eol=crlf
+*.json text working-tree-encoding=UTF-8 eol=crlf
+*.md text working-tree-encoding=UTF-8 eol=crlf
+*.yml text eol=crlf
+.editorconfig text eol=crlf
+.gitattributes text eol=crlf
+.gitignore text eol=crlf
