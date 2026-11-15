@@ -1,74 +1,95 @@
-﻿# GoldLedger
+﻿# GoldLedger 🪙
 
-GoldLedger is a gold wallet and order sample using .NET 10, ASP.NET Core, EF Core and SQLite.
+**Clean Architecture, Domain-Driven Design, and reliable concurrency control in .NET.**
+
+GoldLedger is a gold trading backend built with **.NET 10**, **ASP.NET Core**, and **Entity Framework Core**. It demonstrates how a rich domain model, explicit business rules, and transactional persistence work together to maintain consistency across trading operations.
+
+The system supports gold wallets, buy and sell orders, balance reservations, and internal settlement.
 
 ## Architecture
 
-- GoldLedger.Domain contains aggregates, value objects, validation, domain events and repository contracts.
-- GoldLedger.Application coordinates wallet and order operations. DTOs carry data; validation belongs to the domain.
-- GoldLedger.Infrastructure implements SQLite persistence, internal settlement, event dispatch and the Tehran clock.
-- GoldLedger.API exposes HTTP endpoints and Swagger.
-- GoldLedger.Tests covers domain behavior, persistence, services and HTTP endpoints.
+GoldLedger follows Clean Architecture with clear boundaries between business logic, application workflows, and infrastructure.
 
-## Transactions and concurrency
+| Layer | Responsibility |
+|-------|----------------|
+| **Domain** | Aggregates, value objects, business rules, and domain events |
+| **Application** | Use cases, service orchestration, and application contracts |
+| **Infrastructure** | Persistence, repositories, event processing, and settlement |
+| **API** | HTTP endpoints, request handling, and OpenAPI documentation |
 
-All application mutations run through a shared operation guard. Failed results, exceptions and cancellation discard tracked changes. UnitOfWork also discards changes when preparing or saving a transaction fails.
+The domain remains independent of persistence and transport concerns. Business validation is enforced by domain objects, while application services coordinate operations.
 
-Wallets and orders use application-managed concurrency tokens. Updating owned order tags also updates the order token. Stale updates and duplicate keys return Conflict; callers must reload state before retrying. SQLite lock contention also returns Conflict when it occurs during UnitOfWork execution.
+## Domain-Driven Design
 
-Domain events are dispatched before the final save. Creation events are recorded in DomainEventRecords. A completion event stages an internal PaymentSettlement. The order, wallet, settlement and event records are persisted by the same SaveChanges transaction. Events are cleared only after a successful save or when failed changes are discarded.
+### Aggregates
 
-PaymentSettlements has one entry per order. Matching settlement requests are idempotent; inconsistent repeats fail. Buy entries record the debit including fees; sell entries record the credit after fees. This is an internal ledger, not a bank/payment gateway integration. Event records are an audit log, not an external-message outbox. External integrations would need a separate reliable delivery mechanism.
+**GoldOrder** manages order creation, pricing, fees, metadata, and valid transitions between pending, settled, and cancelled states.
 
-Use UnitOfWork for application writes so that event handling and settlement run. Direct DbContext.SaveChanges is reserved for infrastructure work.
+**GoldWallet** manages total, reserved, and available gold balances. Its operations enforce balance constraints during deposits, withdrawals, reservations, and settlement.
 
-## Request retries and errors
+### Value Objects
 
-Every POST and PATCH requires an Idempotency-Key header. Generate a unique key per logical operation, and reuse it when retrying that operation. Keys contain 1–128 ASCII letters, digits, dots, hyphens or underscores. For example:
+Dedicated value objects make business concepts explicit:
 
-```http
-POST /api/wallets/user/11111111-1111-1111-1111-111111111111/deposit
-Content-Type: application/json
-Idempotency-Key: deposit-20261115-001
+- **GoldWeight** — Gold quantities and weight calculations
+- **Money** — Monetary amounts and rounding rules
+- **Percentage** — Fee percentages and related calculations
+- **Tag** — Validated and normalized order tags
 
-{"amount": 1.5}
-```
+### Domain Events
 
-The key is global across mutation endpoints. The fingerprint includes HTTP method, route and bound request arguments. Reusing a key with different input returns 409. A matching retry returns the original successful body, status and Location, with Idempotency-Replayed: true. First execution returns false. GET requests do not require a key.
+Aggregates raise events to represent business changes. Event processing coordinates internal settlement and persists event records within the same transaction as the associated order and wallet changes.
 
-Business changes and the successful response are committed in one SQLite transaction. Concurrent writes wait for SQLite's write lock; lock timeouts return 409 and can be retried with the same key. Domain concurrency tokens also protect callers that execute application services directly. Failed responses, exceptions and cancellation roll back the outer transaction and do not reserve the key. Successful keys are retained without expiry; deleting a record would permit that operation to execute again.
+## Concurrency and Consistency
 
-Missing or invalid keys return 422 through domain validation. Malformed request bodies return 400. Unexpected errors, including read failures, return a sanitized Result envelope and X-Trace-Id; diagnostic details remain in server logs.
+Trading operations must remain consistent when multiple requests access the same state.
 
-Buy orders whose total rounds to zero are rejected. Monetary rounding follows Money's midpoint-to-even policy; a sale with a 100% fee can have zero net proceeds.
+GoldLedger uses **optimistic concurrency control** with application-managed concurrency tokens on orders and wallets. Stale updates are rejected instead of silently overwriting committed changes. Changes to order tags also participate in concurrency checks.
 
-## Time
+Order transitions, wallet updates, settlement records, and event records are committed atomically. Failed operations roll back their changes, preventing partial settlement or inconsistent balances.
 
-Production services use an injected clock backed by TimeProvider. Dates are stored in UTC; order response timestamps include the Asia/Tehran offset. Domain methods accept an explicit occurrence time for deterministic callers.
+## Idempotent Requests
 
-## Run locally
+Mutating endpoints use an `Idempotency-Key` to prevent repeated execution when clients retry requests.
 
-Run these commands from the solution directory in PowerShell. The absolute database path ensures the API and migration tool use the same file.
+- Identical retries return the original successful response.
+- Reusing a key with different input returns a conflict.
+- Business changes and the successful response are stored in one transaction.
+- Failed requests remain eligible for retry.
 
-```powershell
-dotnet restore GoldLedger.slnx
-$env:ConnectionStrings__GoldLedger = "Data Source=$PWD/GoldLedger.API/goldledger.db"
-dotnet ef database update --project GoldLedger.Infrastructure --startup-project GoldLedger.API
-dotnet run --project GoldLedger.API
-```
+This protects operations such as deposits, withdrawals, and order creation from accidental duplication.
 
-Swagger UI is available at the application root. Database migrations are explicit; the API does not create or migrate tables at startup.
+## Error Handling
 
-The AddRequestIdempotency migration adds durable request-response records. Relative SQLite paths are resolved against the API content root.
+Expected business failures are represented through the **Result pattern**, keeping success and failure paths explicit.
 
-The EnforceLedgerIntegrityAndSettlement migration adds settlement/event tables and database constraints. Existing invalid records must be corrected before this migration can succeed. Existing settled orders are not backfilled with invented payment records.
+Centralized exception handling provides consistent API error responses without exposing internal implementation details.
 
-## Verification
+## Persistence
 
-```powershell
-dotnet test GoldLedger.slnx
-```
+GoldLedger uses **EF Core and SQLite**, with separate entity configurations and versioned database migrations.
 
-Tests cover real file-backed SQLite migrations, stale writes, concurrent completion/cancellation, tag concurrency, internal settlement, transaction rollback and HTTP retries through WebApplicationFactory. The CI workflow builds and tests Release on Windows and Linux.
+Internal settlement records provide a transactional record of completed trades. Settlement represents internal accounting; external payment processing is outside its scope.
 
-Source files use UTF-8 and CRLF line endings.
+## Testing
+
+The test suite includes **243 test cases** across domain, application, persistence, and API layers.
+
+Coverage includes:
+
+- Business rules and financial calculation boundaries
+- Order lifecycle and wallet balance constraints
+- Concurrent updates and competing order transitions
+- Concurrent withdrawals and balance protection
+- Transaction rollback and settlement consistency
+- Database migrations and persistence behavior
+- Request replay and idempotency conflicts
+- HTTP integration tests using `WebApplicationFactory`
+
+## Technology Stack
+
+.NET 10 · ASP.NET Core Web API · Entity Framework Core · SQLite · xUnit · Swagger / OpenAPI
+
+## Source Code
+
+[Explore GoldLedger on GitHub](https://github.com/mohammadrezalamei/GoldLedger/)
