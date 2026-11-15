@@ -29,7 +29,7 @@ public class OrderService : IOrderService
     {
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null)
-            return Result<GoldOrderResponseDto>.Failure("Ø³ÙØ§Ø±Ø´ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result<GoldOrderResponseDto>.Failure("سفارش مورد نظر یافت نشد.", ErrorType.NotFound);
 
         var response = new GoldOrderResponseDto(
             order.Id,
@@ -88,7 +88,7 @@ public class OrderService : IOrderService
 
         var wallet = await _walletRepository.GetByUserIdAsync(request.UserId, cancellationToken);
         if (wallet is null)
-            return Result<Guid>.Failure("Ú©ÛŒÙ Ù¾ÙˆÙ„ Ú©Ø§Ø±Ø¨Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result<Guid>.Failure("کیف پول کاربر یافت نشد.", ErrorType.NotFound);
 
         if (order.Type == OrderType.Sell)
         {
@@ -112,7 +112,7 @@ public class OrderService : IOrderService
     {
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null)
-            return Result.Failure("Ø³ÙØ§Ø±Ø´ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result.Failure("سفارش مورد نظر یافت نشد.", ErrorType.NotFound);
 
         var cancelResult = order.Cancel();
         if (!cancelResult.IsSuccess)
@@ -139,11 +139,11 @@ public class OrderService : IOrderService
     {
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null)
-            return Result.Failure("Ø³ÙØ§Ø±Ø´ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result.Failure("سفارش مورد نظر یافت نشد.", ErrorType.NotFound);
 
         var wallet = await _walletRepository.GetByUserIdAsync(order.UserId, cancellationToken);
         if (wallet is null)
-            return Result.Failure("Ú©ÛŒÙ Ù¾ÙˆÙ„ Ú©Ø§Ø±Ø¨Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result.Failure("کیف پول کاربر یافت نشد.", ErrorType.NotFound);
 
         var completeResult = order.Complete();
         if (!completeResult.IsSuccess)

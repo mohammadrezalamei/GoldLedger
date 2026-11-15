@@ -16,7 +16,7 @@ public class GoldWeight : ValueObject<GoldWeight>
         var normalizedValue = Math.Round(value, 3, MidpointRounding.AwayFromZero);
 
         if (normalizedValue < 0)
-            return Result<GoldWeight>.Failure("ÙˆØ²Ù† Ø·Ù„Ø§ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù…Ù†ÙÛŒ Ø¨Ø§Ø´Ø¯.", ErrorType.Validation);
+            return Result<GoldWeight>.Failure("وزن طلا نمی‌تواند منفی باشد.", ErrorType.Validation);
 
         return Result<GoldWeight>.Success(new GoldWeight(normalizedValue));
     }
@@ -37,7 +37,7 @@ public class GoldWeight : ValueObject<GoldWeight>
     public static GoldWeight operator *(GoldWeight weight, decimal multiplier)
     {
         if (multiplier < 0)
-            throw new ArgumentException("Ø¶Ø±ÛŒØ¨ ÙˆØ²Ù† Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù…Ù†ÙÛŒ Ø¨Ø§Ø´Ø¯.");
+            throw new ArgumentException("ضریب وزن نمی‌تواند منفی باشد.");
         return new(Math.Round(weight.Value * multiplier, 3, MidpointRounding.AwayFromZero));
     }
 
@@ -46,9 +46,9 @@ public class GoldWeight : ValueObject<GoldWeight>
     public static GoldWeight operator /(GoldWeight weight, decimal divisor)
     {
         if (divisor == 0)
-            throw new DivideByZeroException("ØªÙ‚Ø³ÛŒÙ… ÙˆØ²Ù† Ø¨Ø± Ø¹Ø¯Ø¯ ØµÙØ± Ø§Ù…Ú©Ø§Ù†â€ŒÙ¾Ø°ÛŒØ± Ù†ÛŒØ³Øª.");
+            throw new DivideByZeroException("تقسیم وزن بر عدد صفر امکان‌پذیر نیست.");
         if (divisor < 0)
-            throw new ArgumentException("Ù…Ø®Ø±Ø¬ ØªÙ‚Ø³ÛŒÙ… Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ù…Ù†ÙÛŒ Ø¨Ø§Ø´Ø¯.");
+            throw new ArgumentException("مخرج تقسیم نمی‌تواند منفی باشد.");
 
         return new(Math.Round(weight.Value / divisor, 3, MidpointRounding.AwayFromZero));
     }
@@ -56,7 +56,7 @@ public class GoldWeight : ValueObject<GoldWeight>
     public static decimal operator /(GoldWeight left, GoldWeight right)
     {
         if (right.Value == 0)
-            throw new DivideByZeroException("ØªÙ‚Ø³ÛŒÙ… Ø¨Ø± ÙˆØ²Ù† ØµÙØ± Ø§Ù…Ú©Ø§Ù†â€ŒÙ¾Ø°ÛŒØ± Ù†ÛŒØ³Øª.");
+            throw new DivideByZeroException("تقسیم بر وزن صفر امکان‌پذیر نیست.");
 
         return left.Value / right.Value;
     }

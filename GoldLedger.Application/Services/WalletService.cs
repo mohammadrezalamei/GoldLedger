@@ -23,7 +23,7 @@ public class WalletService : IWalletService
     {
         var wallet = await _walletRepository.GetByUserIdAsync(userId, cancellationToken);
         if (wallet is null)
-            return Result<WalletResponseDto>.Failure("Ú©ÛŒÙ Ù¾ÙˆÙ„ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result<WalletResponseDto>.Failure("کیف پول مورد نظر یافت نشد.", ErrorType.NotFound);
 
         return Result<WalletResponseDto>.Success(MapToDto(wallet));
     }
@@ -74,7 +74,7 @@ public class WalletService : IWalletService
 
         var wallet = await _walletRepository.GetByUserIdAsync(userId, cancellationToken);
         if (wallet is null)
-            return Result<WalletResponseDto>.Failure("Ú©ÛŒÙ Ù¾ÙˆÙ„ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯.", ErrorType.NotFound);
+            return Result<WalletResponseDto>.Failure("کیف پول مورد نظر یافت نشد.", ErrorType.NotFound);
 
         var withdrawResult = wallet.Withdraw(goldWeightResult.Value!);
         if (!withdrawResult.IsSuccess)
