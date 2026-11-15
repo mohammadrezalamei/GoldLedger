@@ -1,4 +1,4 @@
-﻿using GoldLedger.Domain.Common;
+using GoldLedger.Domain.Common;
 using GoldLedger.Domain.ValueObjects;
 namespace GoldLedger.Tests.Domain.ValueObjects;
 public sealed class ValueObjectBoundaryTests
