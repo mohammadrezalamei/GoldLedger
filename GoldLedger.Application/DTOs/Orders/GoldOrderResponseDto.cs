@@ -13,7 +13,5 @@ public record GoldOrderResponseDto(
     OrderStatus Status,
     string? UserNote,
     IEnumerable<string> Tags,
-    DateTime CreatedAt
+    DateTimeOffset CreatedAt
 );
-
-

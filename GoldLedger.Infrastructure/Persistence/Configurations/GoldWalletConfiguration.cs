@@ -9,9 +9,13 @@ public sealed class GoldWalletConfiguration : IEntityTypeConfiguration<GoldWalle
     {
         builder.ToTable("Wallets", table =>
         {
-            table.HasCheckConstraint("CK_Wallets_Balance", "Balance >= 0");
-            table.HasCheckConstraint("CK_Wallets_LockedBalance", "LockedBalance >= 0 AND LockedBalance <= Balance");
+            table.HasCheckConstraint("CK_Wallets_Balance", "CAST(Balance AS NUMERIC) >= 0");
+            table.HasCheckConstraint("CK_Wallets_LockedBalance", "CAST(LockedBalance AS NUMERIC) >= 0 AND CAST(LockedBalance AS NUMERIC) <= CAST(Balance AS NUMERIC)");
         });
+        builder.Property(wallet => wallet.CreatedAt)
+            .HasConversion(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
+        builder.Property(wallet => wallet.UpdatedAt)
+            .HasConversion(value => value, value => DateTime.SpecifyKind(value, DateTimeKind.Utc));
         builder.HasKey(wallet => wallet.Id);
         builder.HasIndex(wallet => wallet.UserId).IsUnique();
         builder.Property(wallet => wallet.Balance).HasConversion(weight => weight.Value, value => GoldWeight.Create(value).Value!).HasPrecision(18, 6);
@@ -20,4 +24,3 @@ public sealed class GoldWalletConfiguration : IEntityTypeConfiguration<GoldWalle
         builder.Ignore(wallet => wallet.DomainEvents);
     }
 }
-

@@ -1,4 +1,4 @@
-using GoldLedger.Application.Contracts.Common;
+﻿using GoldLedger.Application.Contracts.Common;
 using GoldLedger.Application.Contracts.Services;
 using GoldLedger.Application.DTOs.Orders;
 using GoldLedger.Domain.Aggregates.GoldOrder;
@@ -13,15 +13,18 @@ public class OrderService : IOrderService
     private readonly IGoldOrderRepository _orderRepository;
     private readonly IGoldWalletRepository _walletRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IClock? _clock;
 
     public OrderService(
         IGoldOrderRepository orderRepository,
         IGoldWalletRepository walletRepository,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IClock? clock = null)
     {
         _orderRepository = orderRepository;
         _walletRepository = walletRepository;
         _unitOfWork = unitOfWork;
+        _clock = clock;
     }
 
     public async Task<Result<GoldOrderResponseDto>> GetByIdAsync(
@@ -46,66 +49,66 @@ public class OrderService : IOrderService
         CreateOrderRequestDto request,
         CancellationToken cancellationToken = default)
     {
-        var weightResult = GoldWeight.Create(request.WeightValue);
-        if (!weightResult.IsSuccess)
+        return await UnitOfWorkOperation.ExecuteAsync(_unitOfWork, async () =>
         {
-            return Result<Guid>.Failure(
-                weightResult.Message!,
-                weightResult.ErrorType);
-        }
-
-        var priceResult = Money.Create(request.UnitPriceAmount);
-        if (!priceResult.IsSuccess)
-        {
-            return Result<Guid>.Failure(
-                priceResult.Message!,
-                priceResult.ErrorType);
-        }
-
-        var feeResult = Percentage.Create(request.FeePercent);
-        if (!feeResult.IsSuccess)
-        {
-            return Result<Guid>.Failure(
-                feeResult.Message!,
-                feeResult.ErrorType);
-        }
-
-        var tags = new List<Tag>();
-
-        foreach (var rawTag in request.Tags ?? Enumerable.Empty<string>())
-        {
-            var tagResult = Tag.Create(rawTag);
-            if (!tagResult.IsSuccess)
+            var weightResult = GoldWeight.Create(request.WeightValue);
+            if (!weightResult.IsSuccess)
             {
                 return Result<Guid>.Failure(
-                    tagResult.Message!,
-                    tagResult.ErrorType);
+                    weightResult.Message!,
+                    weightResult.ErrorType);
             }
 
-            tags.Add(tagResult.Value!);
-        }
+            var priceResult = Money.Create(request.UnitPriceAmount);
+            if (!priceResult.IsSuccess)
+            {
+                return Result<Guid>.Failure(
+                    priceResult.Message!,
+                    priceResult.ErrorType);
+            }
 
-        var orderResult = GoldOrder.Create(
-            request.UserId,
-            request.Type,
-            weightResult.Value!,
-            priceResult.Value!,
-            feeResult.Value!,
-            tags,
-            request.UserNote);
+            var feeResult = Percentage.Create(request.FeePercent);
+            if (!feeResult.IsSuccess)
+            {
+                return Result<Guid>.Failure(
+                    feeResult.Message!,
+                    feeResult.ErrorType);
+            }
 
-        if (!orderResult.IsSuccess)
-        {
-            return Result<Guid>.Failure(
-                orderResult.Message!,
-                orderResult.ErrorType);
-        }
+            var tags = new List<Tag>();
 
-        var order = orderResult.Value!;
-        var committed = false;
+            foreach (var rawTag in request.Tags ?? Enumerable.Empty<string>())
+            {
+                var tagResult = Tag.Create(rawTag);
+                if (!tagResult.IsSuccess)
+                {
+                    return Result<Guid>.Failure(
+                        tagResult.Message!,
+                        tagResult.ErrorType);
+                }
 
-        try
-        {
+                tags.Add(tagResult.Value!);
+            }
+
+            var orderResult = GoldOrder.Create(
+                request.UserId,
+                request.Type,
+                weightResult.Value!,
+                priceResult.Value!,
+                feeResult.Value!,
+                tags,
+                request.UserNote,
+                _clock?.Now.UtcDateTime);
+
+            if (!orderResult.IsSuccess)
+            {
+                return Result<Guid>.Failure(
+                    orderResult.Message!,
+                    orderResult.ErrorType);
+            }
+
+            var order = orderResult.Value!;
+
             var wallet = await _walletRepository.GetByUserIdAsync(
                 request.UserId,
                 cancellationToken);
@@ -119,7 +122,7 @@ public class OrderService : IOrderService
 
             if (order.Type == OrderType.Sell)
             {
-                var lockResult = wallet.Lock(order.Weight);
+                var lockResult = wallet.Lock(order.Weight, _clock?.Now.UtcDateTime);
                 if (!lockResult.IsSuccess)
                 {
                     return Result<Guid>.Failure(
@@ -142,24 +145,15 @@ public class OrderService : IOrderService
                     saveResult.ErrorType);
             }
 
-            committed = true;
-
             return Result<Guid>.Success(order.Id);
-        }
-        finally
-        {
-            if (!committed)
-                _unitOfWork.DiscardChanges();
-        }
+        }, cancellationToken);
     }
 
     public async Task<Result> CancelOrderAsync(
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
-        var committed = false;
-
-        try
+        return await UnitOfWorkOperation.ExecuteAsync(_unitOfWork, async () =>
         {
             var order = await _orderRepository.GetByIdAsync(
                 orderId,
@@ -191,7 +185,8 @@ public class OrderService : IOrderService
 
                 var releaseResult = wallet.ReleaseLocked(
                     order.Weight,
-                    isSettled: false);
+                    isSettled: false,
+                    occurredAt: _clock?.Now.UtcDateTime);
 
                 if (!releaseResult.IsSuccess)
                     return releaseResult;
@@ -204,24 +199,15 @@ public class OrderService : IOrderService
             var saveResult = await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
 
-            committed = saveResult.IsSuccess;
-
             return saveResult;
-        }
-        finally
-        {
-            if (!committed)
-                _unitOfWork.DiscardChanges();
-        }
+        }, cancellationToken);
     }
 
     public async Task<Result> CompleteOrderAsync(
         Guid orderId,
         CancellationToken cancellationToken = default)
     {
-        var committed = false;
-
-        try
+        return await UnitOfWorkOperation.ExecuteAsync(_unitOfWork, async () =>
         {
             var order = await _orderRepository.GetByIdAsync(
                 orderId,
@@ -245,7 +231,7 @@ public class OrderService : IOrderService
                     ErrorType.NotFound);
             }
 
-            var completeResult = order.Complete();
+            var completeResult = order.Complete(_clock?.Now.UtcDateTime);
             if (!completeResult.IsSuccess)
                 return completeResult;
 
@@ -253,14 +239,15 @@ public class OrderService : IOrderService
             {
                 var releaseResult = wallet.ReleaseLocked(
                     order.Weight,
-                    isSettled: true);
+                    isSettled: true,
+                    occurredAt: _clock?.Now.UtcDateTime);
 
                 if (!releaseResult.IsSuccess)
                     return releaseResult;
             }
             else if (order.Type == OrderType.Buy)
             {
-                var depositResult = wallet.Deposit(order.Weight);
+                var depositResult = wallet.Deposit(order.Weight, _clock?.Now.UtcDateTime);
                 if (!depositResult.IsSuccess)
                     return depositResult;
             }
@@ -271,15 +258,8 @@ public class OrderService : IOrderService
             var saveResult = await _unitOfWork.SaveChangesAsync(
                 cancellationToken);
 
-            committed = saveResult.IsSuccess;
-
             return saveResult;
-        }
-        finally
-        {
-            if (!committed)
-                _unitOfWork.DiscardChanges();
-        }
+        }, cancellationToken);
     }
 
     public async Task<Result<IEnumerable<GoldOrderResponseDto>>> GetByUserIdAsync(
@@ -295,7 +275,7 @@ public class OrderService : IOrderService
         return Result<IEnumerable<GoldOrderResponseDto>>.Success(response);
     }
 
-    private static GoldOrderResponseDto MapToDto(GoldOrder order)
+    private GoldOrderResponseDto MapToDto(GoldOrder order)
     {
         return new GoldOrderResponseDto(
             order.Id,
@@ -308,6 +288,7 @@ public class OrderService : IOrderService
             order.Status,
             order.UserNote,
             order.Tags.Select(tag => tag.Value).ToList(),
-            order.CreatedAt);
+            _clock?.ToLocalTime(order.CreatedAt)
+                ?? new DateTimeOffset(DateTime.SpecifyKind(order.CreatedAt, DateTimeKind.Utc)));
     }
 }

@@ -1,11 +1,15 @@
 ﻿using GoldLedger.Domain.Aggregates.GoldOrder;
 using GoldLedger.Domain.Aggregates.GoldWallet;
+using GoldLedger.Domain.ValueObjects;
+using GoldLedger.Domain.Aggregates.Payments;
 using Microsoft.EntityFrameworkCore;
 namespace GoldLedger.Infrastructure.Persistence;
 public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> options) : DbContext(options)
 {
     public DbSet<GoldWallet> Wallets => Set<GoldWallet>();
     public DbSet<GoldOrder> Orders => Set<GoldOrder>();
+    public DbSet<PaymentSettlement> PaymentSettlements => Set<PaymentSettlement>();
+    public DbSet<DomainEventRecord> DomainEventRecords => Set<DomainEventRecord>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -21,13 +25,32 @@ public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> op
 
     private void AdvanceConcurrencyTokens()
     {
-        foreach (var entry in ChangeTracker.Entries().Where(entry => entry.State == EntityState.Modified))
+        ChangeTracker.DetectChanges();
+
+        var entries = ChangeTracker.Entries().ToArray();
+        var orders = entries
+            .Where(entry => entry.Entity is GoldOrder)
+            .ToDictionary(entry => ((GoldOrder)entry.Entity).Id);
+
+        foreach (var tagEntry in entries.Where(entry =>
+                     entry.Entity is Tag &&
+                     entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
         {
-            if (entry.Metadata.FindProperty("ConcurrencyToken") is not null)
-            {
-                var currentToken = (int)(entry.Property("ConcurrencyToken").CurrentValue ?? 0);
-                entry.Property("ConcurrencyToken").CurrentValue = currentToken + 1;
-            }
+            var orderId = (Guid)tagEntry.Property("OrderId").CurrentValue!;
+            if (!orders.TryGetValue(orderId, out var orderEntry))
+                throw new InvalidOperationException("تغییر تگ باید از طریق سفارش بارگذاری‌شده انجام شود.");
+
+            if (orderEntry.State is EntityState.Unchanged or EntityState.Modified)
+                orderEntry.Property(nameof(GoldOrder.ConcurrencyToken)).IsModified = true;
+        }
+
+        foreach (var entry in entries.Where(entry => entry.State == EntityState.Modified))
+        {
+            if (entry.Metadata.FindProperty("ConcurrencyToken") is null)
+                continue;
+
+            var token = entry.Property("ConcurrencyToken");
+            token.CurrentValue = checked((int)token.OriginalValue! + 1);
         }
     }
 
@@ -36,4 +59,3 @@ public sealed class GoldLedgerDbContext(DbContextOptions<GoldLedgerDbContext> op
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(GoldLedgerDbContext).Assembly);
     }
 }
-
